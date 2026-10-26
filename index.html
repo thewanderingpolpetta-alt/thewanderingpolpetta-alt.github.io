@@ -1,0 +1,564 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Idea to Website</title>
+  <meta name="description" content="My step-by-step workflow for going from an idea to a live website with Claude Code, GitHub and GitHub Pages.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+  <style>
+    :root {
+      --bg: #ffffff; --surface: #ffffff; --subtle: #f4f4f4;
+      --ink: #0a0a0a; --muted: #6b6b6b; --line: #e4e4e4; --strong: #0a0a0a; --inverse: #ffffff;
+      --sans: "Inter", "Segoe UI", system-ui, sans-serif;
+      --mono: "JetBrains Mono", Consolas, monospace;
+      --r: 12px;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg: #0a0a0a; --surface: #111; --subtle: #1a1a1a;
+        --ink: #f2f2f2; --muted: #9a9a9a; --line: #2a2a2a; --strong: #f2f2f2; --inverse: #0a0a0a;
+      }
+    }
+    :root[data-theme="dark"] {
+      --bg: #0a0a0a; --surface: #111; --subtle: #1a1a1a;
+      --ink: #f2f2f2; --muted: #9a9a9a; --line: #2a2a2a; --strong: #f2f2f2; --inverse: #0a0a0a;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 16px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+    a { color: inherit; }
+    button { font: inherit; color: inherit; }
+    :focus-visible { outline: 2px solid var(--strong); outline-offset: 3px; border-radius: 6px; }
+    .wrap { max-width: 880px; margin: 0 auto; padding: 0 24px; }
+
+    /* Top bar */
+    .topbar { position: sticky; top: 0; z-index: 20; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+    .topbar .wrap { display: flex; justify-content: space-between; align-items: center; height: 60px; }
+    .brand { font-weight: 700; text-decoration: none; display: flex; align-items: center; gap: 10px; }
+    .mark { width: 20px; height: 20px; border: 2px solid var(--strong); border-radius: 50%; display: grid; place-items: center; }
+    .mark::after { content: ""; width: 8px; height: 8px; background: var(--strong); border-radius: 50%; }
+    .topnav { display: flex; gap: 6px; align-items: center; }
+    .topnav a { font-size: 14px; text-decoration: none; color: var(--muted); padding: 6px 10px; border-radius: 8px; }
+    .topnav a:hover { color: var(--ink); background: var(--subtle); }
+    .icon-btn { width: 34px; height: 34px; display: grid; place-items: center; border: 1px solid var(--line); background: none; border-radius: 50%; cursor: pointer; }
+    .icon-btn:hover { border-color: var(--strong); }
+
+    /* Hero */
+    .hero { padding: 72px 0 40px; text-align: center; }
+    .hero h1 { font-size: clamp(38px, 7vw, 64px); line-height: 1.02; letter-spacing: -.04em; margin: 0 0 14px; }
+    .hero p { font-size: 18px; color: var(--muted); margin: 0 auto; max-width: 30em; }
+
+    /* Stepper */
+    .stepper { position: relative; display: grid; grid-template-columns: repeat(8, 1fr); margin: 24px 0 28px; padding: 0; list-style: none; }
+    .stepper::before { content: ""; position: absolute; left: 6.25%; right: 6.25%; top: 19px; height: 2px; background: var(--line); }
+    .stepper .bar { position: absolute; left: 6.25%; top: 19px; height: 2px; background: var(--strong); transition: width .3s ease; }
+    .stepper li { position: relative; text-align: center; }
+    .dot { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--line); background: var(--bg); cursor: pointer; font: 500 13px var(--mono); color: var(--muted); transition: all .2s; }
+    .dot:hover { border-color: var(--strong); color: var(--ink); }
+    .dot.done { background: var(--strong); border-color: var(--strong); color: var(--inverse); }
+    .dot.current { border-color: var(--strong); color: var(--ink); transform: scale(1.12); }
+    .dot-label { display: block; font-size: 12.5px; margin-top: 8px; color: var(--muted); }
+    .stepper li.is-current .dot-label { color: var(--ink); font-weight: 600; }
+
+    /* Step card */
+    .card { border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); padding: 32px; position: relative; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+    .kicker { font: 500 12px var(--mono); color: var(--muted); letter-spacing: .04em; }
+    .card h2 { font-size: clamp(26px, 4vw, 34px); letter-spacing: -.03em; line-height: 1.15; margin: 6px 0 6px; }
+    .card .lead { color: var(--muted); margin: 0 0 24px; font-size: 17px; }
+    .info { flex-shrink: 0; display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: none; border-radius: 999px; padding: 6px 12px 6px 8px; cursor: pointer; font-size: 13px; color: var(--muted); }
+    .info:hover, .info[aria-expanded="true"] { border-color: var(--strong); color: var(--ink); }
+    .info i { font-style: normal; width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid currentColor; display: grid; place-items: center; font: 600 11px var(--sans); }
+
+    .actions { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+    .actions li { display: flex; gap: 14px; align-items: center; padding: 14px 16px; border: 1px solid var(--line); border-radius: 10px; font-size: 16px; }
+    .actions .n { flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%; background: var(--subtle); display: grid; place-items: center; font: 500 12px var(--mono); }
+
+    .behind { display: none; margin-top: 18px; background: var(--subtle); border-radius: 10px; padding: 18px 20px; font-size: 14.5px; }
+    .behind.open { display: block; animation: fade .2s ease; }
+    .behind h3 { margin: 0 0 8px; font-size: 12px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
+    .behind ul { margin: 0; padding-left: 18px; }
+    .behind li { margin-bottom: 6px; }
+    .behind li:last-child { margin-bottom: 0; }
+    @keyframes fade { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+
+    details.more { margin-top: 14px; border: 1px solid var(--line); border-radius: 10px; }
+    details.more summary { cursor: pointer; padding: 12px 16px; font-size: 14px; font-weight: 500; list-style: none; display: flex; justify-content: space-between; }
+    details.more summary::-webkit-details-marker { display: none; }
+    details.more summary::after { content: "+"; font-family: var(--mono); color: var(--muted); }
+    details.more[open] summary::after { content: "–"; }
+    details.more .inner { padding: 0 16px 16px; }
+    .code { position: relative; margin-top: 10px; }
+    .code:first-child { margin-top: 0; }
+    .code .cap { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+    .code pre { margin: 0; background: var(--subtle); border-radius: 8px; padding: 12px 70px 12px 14px; font: 13px/1.7 var(--mono); overflow-x: auto; }
+    .code .copy { position: absolute; right: 8px; bottom: 8px; }
+    .copy { border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 3px 10px; font-size: 12px; cursor: pointer; }
+    .copy:hover { border-color: var(--strong); }
+
+    .nav-row { display: flex; justify-content: space-between; align-items: center; margin-top: 28px; }
+    .btn { border: 1px solid var(--strong); background: none; border-radius: 999px; padding: 10px 20px; cursor: pointer; font-weight: 500; font-size: 15px; }
+    .btn.primary { background: var(--strong); color: var(--inverse); }
+    .btn:disabled { opacity: .3; cursor: default; }
+    .hint { font-size: 12.5px; color: var(--muted); }
+
+    /* Sections */
+    .section { padding: 88px 0 0; scroll-margin-top: 60px; }
+    .section-head { display: flex; justify-content: space-between; align-items: end; gap: 16px; margin-bottom: 20px; }
+    .section-head h2 { font-size: 28px; letter-spacing: -.03em; margin: 0; }
+    .section-head p { margin: 0; color: var(--muted); font-size: 14.5px; }
+
+    .kicker + h2 { margin-top: 4px; }
+    .lead-muted { color: var(--muted); margin: -8px 0 22px; font-size: 17px; }
+    #next .behind { margin: 0 0 20px; }
+
+    .compare { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 4px; gap: 4px; margin-bottom: 14px; }
+    .compare button { border: 0; background: none; border-radius: 999px; padding: 8px 16px; cursor: pointer; font-size: 14px; color: var(--muted); }
+    .compare button[aria-selected="true"] { background: var(--strong); color: var(--inverse); }
+    .compare-rows { list-style: none; margin: 0 0 28px; padding: 0; border: 1px solid var(--line); border-radius: var(--r); }
+    .compare-rows li { display: grid; grid-template-columns: 160px 1fr auto; gap: 16px; align-items: center; padding: 13px 18px; }
+    .compare-rows li + li { border-top: 1px solid var(--line); }
+    .compare-rows .k { font-size: 14px; color: var(--muted); }
+    .compare-rows .v { font-weight: 500; }
+    .compare-rows .mark-yes, .compare-rows .mark-no { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; }
+    .compare-rows .mark-yes { background: var(--strong); color: var(--inverse); }
+    .compare-rows .mark-no { border: 1.5px solid var(--line); color: var(--muted); }
+
+    .roadmap { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+    .roadmap li { border: 1px dashed var(--muted); border-radius: var(--r); padding: 16px; position: relative; }
+    .roadmap .n { font: 500 12px var(--mono); color: var(--muted); }
+    .roadmap b { display: block; margin: 6px 0 4px; font-size: 15px; line-height: 1.3; }
+    .roadmap span.d { font-size: 13px; color: var(--muted); line-height: 1.45; display: block; }
+    .roadmap .badge { position: absolute; top: 14px; right: 14px; font: 500 10.5px var(--mono); text-transform: uppercase; border: 1px solid var(--line); border-radius: 999px; padding: 1px 7px; color: var(--muted); }
+
+    .prompts { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; }
+    .prompt { text-align: left; border: 1px solid var(--line); background: var(--surface); border-radius: var(--r); padding: 18px; cursor: pointer; display: flex; flex-direction: column; gap: 10px; min-height: 120px; transition: border-color .15s, transform .15s; }
+    .prompt:hover { border-color: var(--strong); transform: translateY(-2px); }
+    .prompt b { font-size: 16px; }
+    .prompt span { font-size: 13.5px; color: var(--muted); line-height: 1.45; flex: 1; }
+    .prompt em { font-style: normal; font-size: 12px; font-family: var(--mono); color: var(--muted); }
+    .prompt:hover em { color: var(--ink); }
+
+    .faq { border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; }
+    .faq details + details { border-top: 1px solid var(--line); }
+    .faq summary { cursor: pointer; list-style: none; padding: 16px 20px; display: flex; justify-content: space-between; gap: 16px; font-weight: 500; }
+    .faq summary::-webkit-details-marker { display: none; }
+    .faq summary::after { content: "+"; font-family: var(--mono); color: var(--muted); }
+    .faq details[open] summary::after { content: "–"; }
+    .faq summary:hover { background: var(--subtle); }
+    .faq .a { padding: 0 20px 18px; color: var(--muted); font-size: 15px; }
+    .faq .a b { color: var(--ink); font-weight: 600; }
+
+    .ideas { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; }
+    .idea { border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); }
+    .idea summary { cursor: pointer; list-style: none; padding: 18px; font-weight: 600; display: flex; justify-content: space-between; gap: 10px; }
+    .idea summary::-webkit-details-marker { display: none; }
+    .idea summary::after { content: "+"; font-family: var(--mono); font-weight: 400; color: var(--muted); }
+    .idea[open] summary::after { content: "–"; }
+    .idea[open] { border-color: var(--strong); }
+    .idea p { margin: 0; padding: 0 18px 18px; font-size: 14px; color: var(--muted); }
+
+    .checks { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: var(--r); }
+    .checks li + li { border-top: 1px solid var(--line); }
+    .checks label { display: flex; gap: 14px; align-items: center; padding: 14px 18px; cursor: pointer; }
+    .checks label:hover { background: var(--subtle); }
+    .checks input { width: 18px; height: 18px; accent-color: var(--strong); flex-shrink: 0; }
+    .checks input:checked + span { color: var(--muted); text-decoration: line-through; }
+    .progress { font: 500 13px var(--mono); color: var(--muted); }
+
+    .tip { position: relative; display: inline-block; }
+    .tip .icon-btn { width: 26px; height: 26px; font: 600 12px var(--sans); }
+    .tip .bubble { display: none; position: absolute; right: 0; top: 34px; width: 240px; background: var(--strong); color: var(--inverse); font-size: 13px; padding: 10px 12px; border-radius: 8px; z-index: 5; }
+    .tip.open .bubble { display: block; }
+
+    footer { margin-top: 96px; border-top: 1px solid var(--line); }
+    footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; padding-top: 22px; padding-bottom: 22px; font-size: 13px; color: var(--muted); }
+
+    .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(20px); background: var(--strong); color: var(--inverse); padding: 10px 18px; border-radius: 999px; font-size: 14px; opacity: 0; pointer-events: none; transition: all .2s; z-index: 50; }
+    .toast.show { opacity: 1; transform: translateX(-50%); }
+
+    @media (max-width: 680px) {
+      .wrap { padding: 0 16px; }
+      .topnav a { display: none; }
+      .hero { padding: 48px 0 24px; }
+      .dot { width: 32px; height: 32px; font-size: 11px; }
+      .stepper::before, .stepper .bar { top: 15px; }
+      .dot-label { display: none; }
+      .card { padding: 22px 18px; }
+      .card-top { flex-direction: column-reverse; gap: 8px; }
+      .info { align-self: flex-start; }
+      .prompts, .ideas, .roadmap { grid-template-columns: 1fr 1fr; }
+      .compare-rows li { grid-template-columns: 1fr auto; gap: 2px 12px; }
+      .compare-rows .k { grid-column: 1 / -1; font-size: 12.5px; }
+      .section-head { flex-wrap: wrap; }
+    }
+    @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } html { scroll-behavior: auto; } }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap">
+      <a class="brand" href="#top"><span class="mark" aria-hidden="true"></span>my learnings</a>
+      <nav class="topnav" aria-label="Sections">
+        <a href="#steps">Steps</a>
+        <a href="#next">Next</a>
+        <a href="#prompts">Prompts</a>
+        <a href="#fixes">Fixes</a>
+        <a href="#checklist">Checklist</a>
+        <button class="icon-btn" id="theme" type="button" aria-label="Toggle dark mode">◐</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap" id="top">
+    <section class="hero">
+      <h1>Idea to live website</h1>
+      <p>8 steps with Claude Code, GitHub and GitHub Pages. No coding needed.</p>
+    </section>
+
+    <!-- Interactive walkthrough -->
+    <section id="steps" aria-label="Workflow steps">
+      <ol class="stepper" id="stepper"><span class="bar" id="bar"></span></ol>
+      <article class="card" id="card" aria-live="polite"></article>
+    </section>
+
+    <!-- Future direction -->
+    <section class="section" id="next">
+      <div class="section-head">
+        <div>
+          <div class="kicker">NEXT LEVEL</div>
+          <h2>Real apps with Vercel</h2>
+        </div>
+        <button class="info" type="button" aria-expanded="false" aria-controls="vercel-behind" data-toggle="vercel-behind"><i>i</i>Behind the scenes</button>
+      </div>
+      <p class="lead-muted">Login, a database and private code, still free and still on GitHub.</p>
+
+      <div class="compare" role="tablist" aria-label="Compare hosting">
+        <button type="button" role="tab" data-plan="pages" aria-selected="false">Today · GitHub Pages</button>
+        <button type="button" role="tab" data-plan="vercel" aria-selected="true">Next · Vercel</button>
+      </div>
+      <ul class="compare-rows" id="compare-rows"></ul>
+
+      <div class="behind" id="vercel-behind">
+        <h3>Behind the scenes</h3>
+        <ul>
+          <li>Vercel's free <b>Hobby</b> plan is for personal, non-commercial projects.</li>
+          <li>Vercel connects to GitHub, so the repository can stay <b>private</b> and every push still keeps its history.</li>
+          <li>Google sign-in comes from a login library (e.g. Auth.js or Clerk) plus a Google Cloud sign-in key.</li>
+          <li>Databases come from Vercel's Marketplace (e.g. Neon Postgres or Supabase), which have free tiers.</li>
+          <li>Secrets like keys go in Vercel's <b>environment variables</b>, never in the code.</li>
+          <li>Vercel's built-in site-wide password is a paid add-on. On the free plan, require sign-in instead (e.g. only allow certain Google accounts).</li>
+        </ul>
+      </div>
+
+      <ol class="roadmap" id="roadmap"></ol>
+    </section>
+
+    <!-- Prompts -->
+    <section class="section" id="prompts">
+      <div class="section-head"><h2>Prompts</h2><p>Click to copy</p></div>
+      <div class="prompts" id="prompt-grid"></div>
+    </section>
+
+    <!-- Fixes -->
+    <section class="section" id="fixes">
+      <div class="section-head"><h2>Problems &amp; fixes</h2><p>Tap to open</p></div>
+      <div class="faq" id="faq"></div>
+    </section>
+
+    <!-- Ideas -->
+    <section class="section" id="ideas">
+      <div class="section-head"><h2>Next ideas</h2><p>Tap to open</p></div>
+      <div class="ideas" id="idea-grid"></div>
+    </section>
+
+    <!-- Checklist -->
+    <section class="section" id="checklist">
+      <div class="section-head">
+        <h2>Checklist</h2>
+        <div style="display:flex;gap:12px;align-items:center">
+          <span class="progress" id="check-progress"></span>
+          <span class="tip" id="check-tip">
+            <button class="icon-btn" type="button" aria-label="About the checklist" aria-expanded="false">i</button>
+            <span class="bubble" role="tooltip">Your ticks are remembered in this browser only. Nothing is sent anywhere.</span>
+          </span>
+        </div>
+      </div>
+      <ul class="checks" id="checks"></ul>
+    </section>
+  </main>
+
+  <footer><div class="wrap"><span>my learnings</span><span>Built with Claude Code · Hosted on GitHub Pages</span></div></footer>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    // ---------- Content ----------
+    const STEPS = [
+      {
+        short: "Start", title: "Start a project", lead: "Give Claude a folder and describe the idea.",
+        actions: ["Open the Claude app → Code tab", "Pick an empty folder", "Describe what you like, what you don't, and ask for recommendations"],
+        behind: ["Claude can only read and write in folders you give it.", "It remembers your preferences per project between sessions.", "It asks before anything risky or public, like installs or publishing."],
+      },
+      {
+        short: "Build", title: "Build the site", lead: "Plain web files. Double-click to open, works offline.",
+        actions: ["Ask for a simple local website", "Keep the content in its own files", "Open index.html to see it"],
+        code: [{ cap: "Folder structure", text: "my-project/\n├── index.html\n├── styles.css\n├── app.js\n├── data/        (content)\n└── README.md", noCopy: true }],
+        behind: ["No programming tools needed: just HTML, CSS and JavaScript.", "Content is saved as .js files because browsers block .json on double-clicked pages.", "Links like #/about make one file act like many pages.", "Saved lists use the browser's own storage (localStorage)."],
+      },
+      {
+        short: "Preview", title: "Preview & test", lead: "Let Claude open it, click around and catch problems.",
+        actions: ["Ask Claude to check every image, link and button", "Test at phone and laptop width", "Use a launcher to view it yourself"],
+        code: [{ cap: "Open Site.cmd: double-click launcher", text: '@echo off\nstart "" http://localhost:8080/\npowershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0serve.ps1"' }],
+        behind: ["Claude's preview can't load styles from a file on disk, so a tiny PowerShell web server (serve.ps1) serves the folder at localhost:8080.", "PowerShell is built into Windows, so there's nothing to install.", "Verifying found real bugs: hidden headings, misplaced map pins."],
+      },
+      {
+        short: "Media", title: "Add photos & maps", lead: "Free photos with credits, interactive maps with pins.",
+        actions: ["Ask for free photos with credits", "Ask for a map with numbered pins", "Check the pin locations"],
+        behind: ["Photos come from Wikimedia Commons (CC licences, credit required).", "Use standard sizes (500–1920 px) so pages stay fast.", "Maps use Leaflet. OpenStreetMap tiles work on the live site; Esri tiles also work on a double-clicked file; CARTO now needs a key.", "Lots of quick lookups trigger 'too many requests'. Batch them."],
+      },
+      {
+        short: "Refine", title: "Refine the design", lead: "Iterate until it feels right.",
+        actions: ["Share a site or style you like", "Ask for specific changes", "Say clearly when something doesn't work"],
+        behind: ["Claude recreates a style's feel without copying the brand or logo.", "Dark mode and phone layouts are cheap to add from the start.", "A clear direction ('minimal, separated, less text') beats many small tweaks."],
+      },
+      {
+        short: "GitHub", title: "Put it on GitHub", lead: "Save the project online, with every version kept.",
+        actions: ["Install Git and the GitHub CLI", "Sign in with a one-time code", "Create the repository and upload"],
+        code: [
+          { cap: "Install (Windows)", text: "winget install --id Git.Git -e --source winget\nwinget install --id GitHub.cli -e --source winget" },
+          { cap: "Sign in, then enter the code at github.com/login/device", text: "gh auth login --hostname github.com --git-protocol https --web\ngh auth setup-git" },
+          { cap: "Create and upload (inside the project folder)", text: 'git init -b main\ngit add -A\ngit commit -m "First version"\ngh repo create my-project --public --source . --remote origin --push' },
+        ],
+        behind: ["Open a new terminal after installing so it finds the new tools.", "If sign-in stalls in a terminal, run it in the background and just enter the code in the browser.", "A .gitignore keeps local files out of the upload.", "GitHub's noreply email keeps your real email private on commits."],
+      },
+      {
+        short: "Publish", title: "Publish with Pages", lead: "Free hosting straight from GitHub.",
+        actions: ["Keep the repository public", "Turn on GitHub Pages", "Open username.github.io/repo"],
+        code: [{ cap: "Turn on Pages", text: 'gh api -X POST repos/USERNAME/my-project/pages -f "source[branch]=main" -f "source[path]=/"' }],
+        behind: ["Free accounts can only publish public repositories.", "The first build takes 1–2 minutes.", "A repository named username.github.io becomes your homepage."],
+      },
+      {
+        short: "Update", title: "Update the site", lead: "Change, review, publish.",
+        actions: ["Ask for the change", "Review it in the preview", "Say “publish it”, then refresh with Ctrl + F5"],
+        code: [{ cap: "What “publish it” runs", text: 'git add -A\ngit commit -m "Describe the change"\ngit push' }],
+        behind: ["Nothing goes live until you say so.", "GitHub rebuilds the site in about a minute.", "Ctrl + F5 skips the browser's cached copy."],
+      },
+    ];
+
+    // Today vs next: [label, GitHub Pages, Vercel] — each value is [text, yes?]
+    const COMPARE = [
+      ["Code on GitHub", ["Public", false], ["Private", true]],
+      ["History & logs", ["Every version kept", true], ["Every version kept", true]],
+      ["Sign-in", ["None", false], ["Google login", true]],
+      ["Database", ["None", false], ["Free tier", true]],
+      ["Access control", ["Anyone with the link", false], ["Only signed-in people", true]],
+      ["Cost", ["Free", true], ["Free for personal use", true]],
+    ];
+
+    const ROADMAP = [
+      ["Connect", "Sign in to Vercel with GitHub and import a private repo"],
+      ["Deploy", "Every push goes live automatically, with preview links"],
+      ["Google login", "Add sign-in with Google"],
+      ["Database", "Add a free database to save data"],
+      ["Protect", "Only allow the people you choose"],
+    ];
+
+    const PROMPTS = [
+      { k: "Kick-off", text: "I want to build a [kind of site] about [topic]. I like [reference] because [reasons]. I don't want [things to avoid]. It should work as a local website on my computer. What would you recommend including, and how should we set it up?" },
+      { k: "Media", text: "Add maps and photos. Use free photos with proper credits, and a map with numbered pins for each place." },
+      { k: "Design", text: "Make it a minimalist black-and-white design with clearly separated elements, less text, and details hidden behind info buttons." },
+      { k: "Structure", text: "Divide the content by [category], with an overview page, a page per category, and links between them." },
+      { k: "Verify", text: "Test it in the browser at phone and laptop width. Check every image loads, every link works, and there are no errors." },
+      { k: "GitHub", text: "This is my GitHub: [link]. Push this project there and set up GitHub Pages so the site is live." },
+      { k: "Publish", text: "Publish the changes to the live site and check that it works." },
+      { k: "Vercel", text: "Keep this repository private on GitHub and deploy it on Vercel. Add Google sign-in, a free database, and only let the people I choose access it." },
+      { k: "Recap", text: "Summarise everything we've done and learned as a reusable page, without the project-specific details." },
+    ];
+
+    const FIXES = [
+      ["Page looks unstyled in the preview", "Run the mini server and open <b>localhost:8080</b>."],
+      ["“git” or “gh” not recognised", "Install with winget, then open a <b>new</b> terminal."],
+      ["GitHub sign-in is stuck", "Run it in the background and enter the code at <b>github.com/login/device</b>."],
+      ["“Too many requests”", "Combine lookups into <b>one batched request</b> and wait a moment."],
+      ["Map says “API key required”", "Switch to <b>OpenStreetMap</b> or <b>Esri</b> tiles."],
+      ["Map says “data not available”", "Use OpenStreetMap on the live site, or limit the zoom."],
+      ["Heading hidden under the menu", "Add <b>scroll-margin-top</b> to headings."],
+      ["Live site shows the old version", "Wait a minute, then refresh with <b>Ctrl + F5</b>."],
+    ];
+
+    const IDEAS = [
+      ["Fact-check", "Ask Claude to verify facts, rules and prices against current sources before publishing."],
+      ["CLAUDE.md", "A file of standing instructions Claude reads every session: style, tone, what to avoid."],
+      ["Starter template", "Save a skeleton project as a GitHub template to start new sites in minutes."],
+      ["Custom domain", "Point your own web address at GitHub Pages in Settings → Pages."],
+      ["Local images", "Store photos in the repo so they never disappear."],
+      ["Accessibility", "Alt text on images, strong contrast, full keyboard navigation."],
+      ["Commit messages", "Short, clear messages turn the history into a project diary."],
+    ];
+
+    const CHECKS = [
+      "Empty folder open in Claude Code", "Idea described, recommendations asked", "Site built with content in its own files",
+      "Tested at phone and laptop width", "Photos (with credits) and maps added", "Design refined",
+      ".gitignore and README added", "Repository created and pushed", "GitHub Pages on, live site checked",
+    ];
+
+    // ---------- Helpers ----------
+    const $ = (id) => document.getElementById(id);
+    const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+    const store = {
+      get(k, d) { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } },
+      set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+    };
+    let toastTimer;
+    function toast(msg) {
+      const t = $("toast");
+      t.textContent = msg;
+      t.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => t.classList.remove("show"), 1600);
+    }
+    async function copy(text) {
+      try { await navigator.clipboard.writeText(text); toast("Copied"); }
+      catch { toast("Couldn't copy: select the text instead"); }
+    }
+
+    // ---------- Stepper ----------
+    let current = Math.min(store.get("learnings-step", 0), STEPS.length - 1);
+    const stepper = $("stepper");
+    stepper.insertAdjacentHTML("beforeend", STEPS.map((s, i) => `
+      <li><button class="dot" type="button" data-step="${i}" aria-label="Step ${i + 1}: ${esc(s.title)}">${String(i + 1).padStart(2, "0")}</button>
+      <span class="dot-label">${esc(s.short)}</span></li>`).join(""));
+
+    function showStep(i, focus) {
+      current = i;
+      store.set("learnings-step", i);
+      const s = STEPS[i];
+      stepper.querySelectorAll(".dot").forEach((d, j) => {
+        d.classList.toggle("done", j < i);
+        d.classList.toggle("current", j === i);
+        d.setAttribute("aria-current", j === i ? "step" : "false");
+        d.parentElement.classList.toggle("is-current", j === i);
+      });
+      $("bar").style.width = `${(i / (STEPS.length - 1)) * 87.5}%`;
+
+      $("card").innerHTML = `
+        <div class="card-top">
+          <div>
+            <div class="kicker">STEP ${String(i + 1).padStart(2, "0")} / ${String(STEPS.length).padStart(2, "0")}</div>
+            <h2 tabindex="-1" id="step-title">${esc(s.title)}</h2>
+          </div>
+          <button class="info" type="button" aria-expanded="false" aria-controls="behind"><i>i</i>Behind the scenes</button>
+        </div>
+        <p class="lead">${esc(s.lead)}</p>
+        <ul class="actions">${s.actions.map((a, j) => `<li><span class="n">${j + 1}</span>${esc(a)}</li>`).join("")}</ul>
+        <div class="behind" id="behind"><h3>Behind the scenes</h3><ul>${s.behind.map((b) => `<li>${esc(b)}</li>`).join("")}</ul></div>
+        ${s.code ? `<details class="more"><summary>Show commands</summary><div class="inner">${s.code.map((c) => `
+          <div class="code"><div class="cap">${esc(c.cap)}</div><pre>${esc(c.text)}</pre>${c.noCopy ? "" : `<button class="copy" type="button">Copy</button>`}</div>`).join("")}</div></details>` : ""}
+        <div class="nav-row">
+          <button class="btn" type="button" data-nav="-1" ${i === 0 ? "disabled" : ""}>← Back</button>
+          <span class="hint">Use ← → keys</span>
+          <button class="btn primary" type="button" data-nav="1">${i === STEPS.length - 1 ? "Done ✓" : "Next →"}</button>
+        </div>`;
+      if (focus) $("step-title").focus({ preventScroll: true });
+    }
+
+    stepper.addEventListener("click", (e) => {
+      const d = e.target.closest("[data-step]");
+      if (d) showStep(+d.dataset.step, true);
+    });
+    $("card").addEventListener("click", (e) => {
+      const info = e.target.closest(".info");
+      if (info) {
+        const open = $("behind").classList.toggle("open");
+        info.setAttribute("aria-expanded", open);
+        return;
+      }
+      const nav = e.target.closest("[data-nav]");
+      if (nav) {
+        const next = current + +nav.dataset.nav;
+        if (next >= STEPS.length) { toast("That's the whole workflow 🎉"); $("prompts").scrollIntoView(); return; }
+        showStep(next, true);
+        return;
+      }
+      const c = e.target.closest(".copy");
+      if (c) copy(c.parentElement.querySelector("pre").innerText);
+    });
+    document.addEventListener("keydown", (e) => {
+      if (/input|textarea/i.test(document.activeElement.tagName)) return;
+      const r = $("steps").getBoundingClientRect();
+      if (r.bottom < 0 || r.top > innerHeight) return;
+      if (e.key === "ArrowRight" && current < STEPS.length - 1) showStep(current + 1, true);
+      if (e.key === "ArrowLeft" && current > 0) showStep(current - 1, true);
+    });
+    showStep(current);
+
+    // ---------- Prompts ----------
+    $("prompt-grid").innerHTML = PROMPTS.map((p, i) => `
+      <button class="prompt" type="button" data-prompt="${i}" title="${esc(p.text)}">
+        <b>${esc(p.k)}</b><span>${esc(p.text.length > 80 ? p.text.slice(0, 78) + "…" : p.text)}</span><em>Copy →</em>
+      </button>`).join("");
+    $("prompt-grid").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-prompt]");
+      if (b) copy(PROMPTS[+b.dataset.prompt].text);
+    });
+
+    // ---------- Next: Vercel ----------
+    function showPlan(plan) {
+      const col = plan === "pages" ? 1 : 2;
+      document.querySelectorAll("[data-plan]").forEach((b) => b.setAttribute("aria-selected", b.dataset.plan === plan));
+      $("compare-rows").innerHTML = COMPARE.map((row) => {
+        const [text, yes] = row[col];
+        return `<li><span class="k">${esc(row[0])}</span><span class="v">${esc(text)}</span><span class="${yes ? "mark-yes" : "mark-no"}" aria-label="${yes ? "Yes" : "No"}">${yes ? "✓" : "–"}</span></li>`;
+      }).join("");
+    }
+    document.querySelector(".compare").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-plan]");
+      if (b) showPlan(b.dataset.plan);
+    });
+    showPlan("vercel");
+    $("roadmap").innerHTML = ROADMAP.map(([t, d], i) => `
+      <li><span class="n">${String(STEPS.length + i + 1).padStart(2, "0")}</span><span class="badge">Planned</span><b>${esc(t)}</b><span class="d">${esc(d)}</span></li>`).join("");
+    document.querySelector("[data-toggle]").addEventListener("click", (e) => {
+      const btn = e.currentTarget;
+      const open = $(btn.dataset.toggle).classList.toggle("open");
+      btn.setAttribute("aria-expanded", open);
+    });
+
+    // ---------- Fixes & ideas ----------
+    $("faq").innerHTML = FIXES.map(([q, a]) => `<details><summary>${esc(q)}</summary><div class="a">${a}</div></details>`).join("");
+    $("idea-grid").innerHTML = IDEAS.map(([t, d]) => `<details class="idea"><summary>${esc(t)}</summary><p>${esc(d)}</p></details>`).join("");
+
+    // ---------- Checklist ----------
+    const ticked = store.get("learnings-checklist", {});
+    $("checks").innerHTML = CHECKS.map((c, i) => `
+      <li><label><input type="checkbox" data-i="${i}" ${ticked[i] ? "checked" : ""}><span>${esc(c)}</span></label></li>`).join("");
+    const updateProgress = () => ($("check-progress").textContent = `${Object.values(ticked).filter(Boolean).length} / ${CHECKS.length}`);
+    $("checks").addEventListener("change", (e) => {
+      ticked[e.target.dataset.i] = e.target.checked;
+      store.set("learnings-checklist", ticked);
+      updateProgress();
+    });
+    updateProgress();
+    const tip = $("check-tip");
+    tip.querySelector("button").addEventListener("click", (e) => {
+      const open = tip.classList.toggle("open");
+      e.currentTarget.setAttribute("aria-expanded", open);
+    });
+    document.addEventListener("click", (e) => { if (!tip.contains(e.target)) tip.classList.remove("open"); });
+
+    // ---------- Theme ----------
+    const root = document.documentElement;
+    const saved = store.get("learnings-theme", null);
+    if (saved) root.dataset.theme = saved;
+    $("theme").addEventListener("click", () => {
+      const dark = root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+      root.dataset.theme = dark ? "light" : "dark";
+      store.set("learnings-theme", root.dataset.theme);
+    });
+  </script>
+</body>
+</html>
